@@ -10,7 +10,7 @@ client = commands.Bot(command_prefix="#", intents=intents)
 
 @client.event
 async def on_ready():
-    await client.change_presence(status=discord.Status.online, activity=discord.Game(name="Hi :D"))
+    await client.change_presence(status=discord.Status.do_not_disturb, activity=discord.Game(name="Still on Dev"))
     await client.tree.sync()
 
     print("#############################")
@@ -56,6 +56,11 @@ async def create_ticket_message(interaction: discord.Interaction):
 
 @client.event
 async def on_raw_reaction_add(payload):
+
+    if payload.user_id == client.user.id:
+        return
+
+
     global ticket_counter
     guild = client.get_guild(payload.guild_id)
     if guild is None:
@@ -101,7 +106,7 @@ async def on_raw_reaction_add(payload):
 
         embed = discord.Embed(
             title="Új Ticket",
-            description=f"{member.mention}, miben tudunk segíteni?\n{support_role.mention} csapatunk segít neked.",
+            description=f"{member.mention}, miben tudunk segíteni?\n @ping(DEV) csapatunk segít neked.", # {support_role.mention}
             color=discord.Color.green(),
             timestamp=datetime.now()
         )
@@ -126,11 +131,14 @@ async def on_raw_reaction_add(payload):
             # Ensure the user has the support role before proceeding with ticket closure
             if support_role in member.roles:
                 # Revoke the ticket creator's read permission on the ticket channel
-                ticket_creator_id = ticket_creators.get(member.id)
-                if ticket_creator_id:
-                    ticket_creator = guild.get_member(ticket_creator_id)
-                    if ticket_creator:
-                        await channel.set_permissions(ticket_creator, read_messages=False)
+                try:
+                    ticket_creator_id = ticket_creators.get(member.id)
+                    if ticket_creator_id:
+                        ticket_creator = guild.get_member(ticket_creator_id)
+                        if ticket_creator:
+                            await channel.set_permissions(ticket_creator, read_messages=False)
+                except:
+                    embed = discord.Embed(title="Hiba", description="JOGELVÉTELI HIBA")
 
                 # Create and send a closing embed message
                 embed = discord.Embed(
@@ -185,5 +193,17 @@ async def on_raw_reaction_add(payload):
         except asyncio.TimeoutError:
             # Notify in the channel if the user didn't respond in time
             await channel.send(f"{member.mention}, a válaszidő lejárt! Kérlek, próbáld újra később.")
+        except Exception as e:
+                    error_embed = discord.Embed(
+                        title="Hiba történt",
+                        description=f"Hiba történt a parancs végrehajtása során:\n```{str(e)}```",
+                        color=discord.Color.red()
+                    )
+                    now = datetime.now()
+                    error_embed.timestamp = now
+                    error_embed.set_footer(text=f"OG heckerMC Developer = @Mirki_240 © Copyright 2024",
+                                        icon_url="https://i.imgur.com/GZz7V0Y.png")
+                    await ctx.send(embed=error_embed)
+                    print(f"Hiba: {str(e)}")
 
-client.run("FOS XD")
+client.run("aaa")
